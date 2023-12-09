@@ -23,8 +23,10 @@ def calculate_neighborhood_fidelity(
         perturbation_variance,
         n_points
 ):
-    #TODO
-    pass
+    # x.shape is: [batch_size, n_features]
+    variance = perturbation_variance * torch.eye(x.shape[1])
+    nearby_points = torch.normal(x, variance, n_points)
+    return (1 / n_points) * torch.sum(torch.pow(surrogate_model(nearby_points) - base_model(nearby_points), 2), dim=-1)
 
 
 def calculate_global_neighborhood_fidelity(
@@ -38,7 +40,6 @@ def calculate_global_neighborhood_fidelity(
                                                      perturbation_variance, n_points), dim=-1)
 
 
-# x's shape - [batch_size, features]
 def mtl_loss(
         x,
         y,
@@ -47,6 +48,7 @@ def mtl_loss(
         base_model_pred,
         surrogate_model_pred
 ):
+    # x.shape is: [batch_size, n_features]
     n_elements = x.shape[0]
     base_loss_term = alpha * base_loss_fn(base_model_pred, y)
     point_fidelity_term = (1 - alpha) * calculate_point_fidelity(base_model_pred, surrogate_model_pred)
