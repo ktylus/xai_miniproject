@@ -1,6 +1,7 @@
 import pandas as pd
 from torch.utils.data import Dataset
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from pandas.api.types import is_numeric_dtype
 
 
@@ -27,35 +28,45 @@ class CaliforniaHousingDataset(Dataset):
         target: pd.DataFrame. Data containing targets
     """
 
-    def __init__(self, dataset_path: str, normalize: bool = False):
+    def __init__(self, dataset_path: str, normalize: bool = False, train: bool = True, train_size: float = 0.8):
         """Initializes dataset
 
         Args:
             dataset_path: Path to cal_housing.data file
             normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            train: Boolean whether to extract training set
+            train_size: Fraction of the dataset devoted to the training set
         """
-        self.dataset = pd.read_csv(dataset_path, header=None)
+        dataset = pd.read_csv(dataset_path, header=None)
+        self.target_col = dataset.columns[-1]  # 8, Median house value
+        self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
             self._normalize_dataset()
 
-        self.target_col = self.dataset.columns[-1]  # 8, Median house value
-        self.features, self.target = self._split_features_target()
+        features_train, features_test, target_train, target_test = train_test_split(
+            self.features, self.target, train_size=train_size)
+        if train:
+            self.features = features_train
+            self.target = target_train
+        else:
+            self.features = features_test
+            self.target = target_test
 
     def _normalize_dataset(self):
         """Normalizes the dataset to mean=0 and std=1"""
         scaler = StandardScaler()
-        self.dataset = pd.DataFrame(scaler.fit_transform(self.dataset))
+        self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
-    def _split_features_target(self):
+    def _split_features_target(self, dataset):
         """Splits the dataset into features and target"""
-        features = self.dataset.drop(self.target_col, axis=1)
-        target = self.dataset[self.target_col]
+        features = dataset.drop(self.target_col, axis=1)
+        target = dataset[self.target_col]
         return features, target
 
     def __len__(self):
         """Returns the length of the dataset"""
-        return len(self.dataset)
+        return len(self.features)
 
     def __getitem__(self, idx):
         """Returns the features and target for a given index"""
