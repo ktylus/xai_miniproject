@@ -1,5 +1,6 @@
 import pandas as pd
 from torch.utils.data import Dataset
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from pandas.api.types import is_numeric_dtype
@@ -11,7 +12,7 @@ class CaliforniaHousingDataset(Dataset):
     https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
 
     Example usage:
-        from torch.utils.data import DataLoader, random_split
+        from torch.utils.data import DataLoader
 
         california_housing_path = "path/to/cal_housing.data"
 
@@ -81,12 +82,12 @@ class AdultDataset(Dataset):
     https://archive.ics.uci.edu/dataset/2/adult
 
     Example usage:
-        from torch.utils.data import DataLoader, random_split
+        from torch.utils.data import DataLoader
 
-        path = "path/to/adult.data"
+        adult_path = "path/to/adult.data"
 
-        dataset = CaliforniaHousingDataset(path)
-        test_dataset, train_dataset = random_split(dataset, [0.2, 0.8])
+        test_dataset = AdultDataset(adult_path, train=False)
+        train_dataset = AdultDataset(adult_path, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -97,14 +98,25 @@ class AdultDataset(Dataset):
         target: pd.DataFrame. Data containing targets
     """
 
-    def __init__(self, dataset_path: str):
-        """Initializes the dataset
+    def __init__(self, dataset_path: str, train: bool = True, train_size: float = 0.8):
+        """Initializes dataset
 
         Args:
             dataset_path (str): Path to adult.data file
+            train: Boolean whether to extract training set
+            train_size: Fraction of the dataset devoted to the training set
         """
         self.dataset = self._load_and_preprocess_data(dataset_path)
         self.features, self.target = self._split_features_target()
+
+        features_train, features_test, target_train, target_test = train_test_split(
+            self.features, self.target, train_size=train_size)
+        if train:
+            self.features = features_train
+            self.target = target_train
+        else:
+            self.features = features_test
+            self.target = target_test
 
     def _load_and_preprocess_data(self, dataset_path):
         """Loads and preprocesses the dataset"""
