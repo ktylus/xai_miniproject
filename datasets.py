@@ -15,8 +15,8 @@ class CaliforniaHousingDataset(Dataset):
 
         california_housing_path = "path/to/cal_housing.data"
 
-        dataset = CaliforniaHousingDataset(california_housing_path, normalize=True)
-        test_dataset, train_dataset = random_split(dataset, [0.2, 0.8])
+        test_dataset = CaliforniaHousingDataset(california_housing_path, normalize=True, train=False)
+        train_dataset = CaliforniaHousingDataset(california_housing_path, normalize=True, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
