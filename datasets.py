@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from pandas.api.types import is_numeric_dtype
+from pandas.api.types import is_numeric_dtype, is_float_dtype
 
 
 class CaliforniaHousingDataset(Dataset):
@@ -105,16 +105,26 @@ class AdultDataset(Dataset):
         target: pd.DataFrame. Data containing targets
     """
 
-    def __init__(self, dataset_path: str, train: bool = True, train_size: float = 0.8):
+    def __init__(
+            self,
+            dataset_path: str,
+            normalize: bool = False,
+            train: bool = True,
+            train_size: float = 0.8
+    ):
         """Initializes dataset
 
         Args:
             dataset_path (str): Path to adult.data file
+            normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
         """
         self.dataset = self._load_and_preprocess_data(dataset_path)
         self.features, self.target = self._split_features_target()
+
+        if normalize:
+            self._normalize_dataset()
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -156,6 +166,11 @@ class AdultDataset(Dataset):
                     [dataset_one_hot, one_hot_from_column], axis=1
                 )
         return dataset_one_hot
+
+    def _normalize_dataset(self):
+        """Normalizes the dataset to mean=0 and std=1"""
+        scaler = StandardScaler()
+        self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
     def _split_features_target(self):
         """Splits the dataset into features and target"""
