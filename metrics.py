@@ -20,22 +20,24 @@ def calculate_neighborhood_fidelity(
         base_model,
         surrogate_model,
         x,
-        perturbation_variance,
-        n_points
+        perturbation_variance=0.1,
+        n_points=50
 ):
-    variance = perturbation_variance * torch.eye(x.shape[1])
-    nearby_points = torch.normal(x, variance, n_points)
-    base_model_preds = base_model(nearby_points)
-    surrogate_model_preds = surrogate_model(nearby_points)
-    return calculate_global_fidelity(base_model_preds, surrogate_model_preds)
+    x_expanded = x.unsqueeze(-1).expand(*x.shape, n_points)
+    nearby_points = torch.normal(x_expanded, perturbation_variance)
+    nearby_points = torch.swapaxes(nearby_points, 1, 2)
+    base_model_preds = base_model(nearby_points).squeeze()
+    surrogate_model_preds = surrogate_model(nearby_points).squeeze()
+    return (1 / n_points) * torch.sum(torch.pow(surrogate_model_preds - base_model_preds, 2), dim=-1)
 
 
 def calculate_global_neighborhood_fidelity(
         base_model,
         surrogate_model,
         x,
-        perturbation_variance,
-        n_points
+        perturbation_variance=0.1,
+        n_points=50
 ):
-    return torch.sum(calculate_neighborhood_fidelity(base_model, surrogate_model, x,
+    batch_size = x.shape[0]
+    return (1 / batch_size) * torch.sum(calculate_neighborhood_fidelity(base_model, surrogate_model, x,
                                                      perturbation_variance, n_points))
