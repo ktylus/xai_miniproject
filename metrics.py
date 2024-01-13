@@ -23,9 +23,13 @@ def calculate_neighborhood_fidelity(
         perturbation_variance=0.1,
         n_points=50
 ):
+    # x shape is: [batch_size, n_features] when called by calculate_global_neighborhood_fidelity
+    # and [n_features] otherwise
     x_expanded = x.unsqueeze(-1).expand(*x.shape, n_points)
     nearby_points = torch.normal(x_expanded, perturbation_variance)
     nearby_points = torch.swapaxes(nearby_points, 1, 2)
+    # nearby_points shape is: [batch_size, n_points, n_features]
+    # which should go into the network to obtain: [batch_size, n_points, 1]
     base_model_preds = base_model(nearby_points).squeeze()
     surrogate_model_preds = surrogate_model(nearby_points).squeeze()
     return (1 / n_points) * torch.sum(torch.pow(surrogate_model_preds - base_model_preds, 2), dim=-1)
