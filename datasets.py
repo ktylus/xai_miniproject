@@ -146,6 +146,13 @@ class AdultDataset(Dataset):
         for column in columns_with_question_mark_as_values:
             dataset[column] = dataset[column].replace([" ?"], f"{column}_unknown")
 
+        # int64 -> float32
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
         # After ohe, one of the columns is redundant (" <=50K", ">50K")
         return self._one_hot(dataset).drop(" <=50K", axis=1)
 
