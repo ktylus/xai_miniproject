@@ -3,7 +3,8 @@ from torch.utils.data import Dataset
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from pandas.api.types import is_numeric_dtype
+from pandas.api.types import is_numeric_dtype, is_float_dtype
+import numpy as np
 
 
 class CaliforniaHousingDataset(Dataset):
@@ -45,11 +46,15 @@ class CaliforniaHousingDataset(Dataset):
             train_size: Fraction of the dataset devoted to the training set
         """
         dataset = pd.read_csv(dataset_path, header=None)
+        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
+            np.float64
+        ).astype(np.float32)
+
         self.target_col = dataset.columns[-1]  # 8, Median house value
         self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
-            self._normalize_dataset()
+            self._normalize_features()
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -61,8 +66,8 @@ class CaliforniaHousingDataset(Dataset):
             self.features = features_test
             self.target = target_test
 
-    def _normalize_dataset(self):
-        """Normalizes the dataset to mean=0 and std=1"""
+    def _normalize_features(self):
+        """Normalizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
         self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
@@ -218,7 +223,7 @@ class WineDataset(Dataset):
         self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
-            self._normalize_dataset()
+            self._normalize_features()
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -229,8 +234,8 @@ class WineDataset(Dataset):
             self.features = features_test
             self.target = target_test
 
-    def _normalize_dataset(self):
-        """Normalizes the dataset to mean=0 and std=1"""
+    def _normalize_features(self):
+        """Normalizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
         self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
@@ -296,7 +301,7 @@ class AutoMpgDataset(Dataset):
         self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
-            self._normalize_dataset()
+            self._normalize_features()
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -322,8 +327,8 @@ class AutoMpgDataset(Dataset):
         dataset = dataset[dataset[col_name] != "?"]
         return dataset
 
-    def _normalize_dataset(self):
-        """Normalizes the dataset to mean=0 and std=1"""
+    def _normalize_features(self):
+        """Normalizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
         self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
@@ -404,7 +409,7 @@ class TitanicDataset(Dataset):
         self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
-            self._normalize_dataset()
+            self._normalize_features()
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -418,18 +423,16 @@ class TitanicDataset(Dataset):
     def _preprocess_dataset(self, dataset):
         # Drop 2 name, 7 ticket, 9 cabin, 11 boat, 12 body, 13 home dest column
         to_drop = dataset.columns[[2, 7, 9, 11, 12, 13]]
-        dataset = dataset.drop(
-            to_drop, axis=1
-        )  
+        dataset = dataset.drop(to_drop, axis=1)
         dataset.dropna()
-        
+
         col_names = [col for col in dataset.columns if "?" in dataset[col].unique()]
 
         for col in col_names:
             dataset = dataset[dataset[col] != "?"]
 
-        dataset[4] = pd.to_numeric(dataset[4]) # Convert age to numeric
-        dataset[8] = pd.to_numeric(dataset[8]) # Convert fare to numeric
+        dataset[4] = pd.to_numeric(dataset[4])  # Convert age to numeric
+        dataset[8] = pd.to_numeric(dataset[8])  # Convert fare to numeric
         return self._one_hot(dataset)
 
     def _one_hot(self, dataset):
@@ -445,9 +448,9 @@ class TitanicDataset(Dataset):
                 )
         return dataset_one_hot
 
-    def _normalize_dataset(self):
-        """Normalizes the dataset to mean=0 and std=1"""
-        self.features = self.features.rename(str,axis="columns") 
+    def _normalize_features(self):
+        """Normalizes the features to mean=0 and std=1"""
+        self.features = self.features.rename(str, axis="columns")
         scaler = StandardScaler()
         self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
