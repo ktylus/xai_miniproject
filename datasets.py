@@ -12,15 +12,7 @@ class BaseDataset(Dataset):
         pass
 
     def _dtypes_to_float32(self, dataset):
-        # float64 -> float32
-        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
-            np.float64
-        ).astype(np.float32)
-        # int64 -> float32
-        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
-            np.int64
-        ).astype(np.float32)
-        return dataset
+        return dataset.astype("float32")
 
     def _one_hot(self, dataset):
         """Performs one-hot encoding on categorical columns"""
@@ -188,6 +180,7 @@ class AdultDataset(BaseDataset):
         dataset = self._one_hot(dataset).drop(" <=50K", axis=1)
 
         dataset = self._dtypes_to_float32(dataset)
+        dataset.columns = dataset.columns.map(str)
         return dataset
 
 

@@ -13,43 +13,35 @@ def calculate_global_fidelity(
         surrogate_model_pred
 ):
     n_elements = base_model_pred.shape[0]
-    return (1 / n_elements) * torch.sum(calculate_point_fidelity(base_model_pred, surrogate_model_pred), dim=-1)
+    return (1 / n_elements) * torch.sum(calculate_point_fidelity(base_model_pred, surrogate_model_pred))
 
 
 def calculate_neighborhood_fidelity(
         base_model,
         surrogate_model,
         x,
-        perturbation_variance,
-        n_points
+        perturbation_variance=0.1,
+        n_points=50
 ):
-    # x.shape is: [batch_size, n_features]
-    variance = perturbation_variance * torch.eye(x.shape[1])
-    nearby_points = torch.normal(x, variance, n_points)
-    return (1 / n_points) * torch.sum(torch.pow(surrogate_model(nearby_points) - base_model(nearby_points), 2), dim=-1)
+    # x shape is: [batch_size, n_features] when called by calculate_global_neighborhood_fidelity
+    # and [n_features] otherwise
+    x_expanded = x.unsqueeze(-1).expand(*x.shape, n_points)
+    nearby_points = torch.normal(x_expanded, perturbation_variance)
+    nearby_points = torch.swapaxes(nearby_points, 1, 2)
+    # nearby_points shape is: [batch_size, n_points, n_features]
+    # which should go into the network to obtain: [batch_size, n_points, 1]
+    base_model_preds = base_model(nearby_points).squeeze()
+    surrogate_model_preds = surrogate_model(nearby_points).squeeze()
+    return (1 / n_points) * torch.sum(torch.pow(surrogate_model_preds - base_model_preds, 2), dim=-1)
 
 
 def calculate_global_neighborhood_fidelity(
         base_model,
         surrogate_model,
         x,
-        perturbation_variance,
-        n_points
+        perturbation_variance=0.1,
+        n_points=50
 ):
-    return torch.sum(calculate_neighborhood_fidelity(base_model, surrogate_model, x,
-                                                     perturbation_variance, n_points), dim=-1)
-
-
-def mtl_loss(
-        x,
-        y,
-        base_loss_fn,
-        alpha,
-        base_model_pred,
-        surrogate_model_pred
-):
-    # x.shape is: [batch_size, n_features]
-    n_elements = x.shape[0]
-    base_loss_term = alpha * base_loss_fn(base_model_pred, y)
-    point_fidelity_term = (1 - alpha) * calculate_point_fidelity(base_model_pred, surrogate_model_pred)
-    return (1 / n_elements) * torch.sum(base_loss_term + point_fidelity_term, dim=-1)
+    batch_size = x.shape[0]
+    return (1 / batch_size) * torch.sum(calculate_neighborhood_fidelity(base_model, surrogate_model, x,
+                                                     perturbation_variance, n_points))
