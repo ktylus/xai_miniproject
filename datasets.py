@@ -303,7 +303,6 @@ class AutoMpgDataset(Dataset):
         """
         dataset = pd.read_csv(dataset_path, header=None, delim_whitespace=True)
         dataset = self._preprocess_dataset(dataset)
-
         self.target_col = dataset.columns[0]  # 0, mpg - miles per galon
         self.features, self.target = self._split_features_target(dataset)
 
@@ -332,6 +331,21 @@ class AutoMpgDataset(Dataset):
                 col_name = col
 
         dataset = dataset[dataset[col_name] != "?"]
+
+        # 3rd column has dtype object
+        # we have to convert exclusively
+        dataset[3] = dataset[3].astype(np.float32)
+
+        # int64 -> float32
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
+
+        # float64 -> float32
+        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
+            np.float64
+        ).astype(np.float32)
+
         return dataset
 
     def _normalize_features(self):
