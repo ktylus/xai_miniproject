@@ -226,6 +226,8 @@ class WineDataset(Dataset):
             train_size: Fraction of the dataset devoted to the training set
         """
         dataset = pd.read_csv(dataset_path, sep=";")
+        dataset = self._dtypes_to_float32(dataset)
+
         self.target_col = dataset.columns[-1]  # 12, wine quality
         self.features, self.target = self._split_features_target(dataset)
 
@@ -240,6 +242,17 @@ class WineDataset(Dataset):
         else:
             self.features = features_test
             self.target = target_test
+
+    def _dtypes_to_float32(self, dataset):
+        # float64 -> float32
+        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
+            np.float64
+        ).astype(np.float32)
+        # int64 -> float32
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
+        return dataset
 
     def _normalize_features(self):
         """Normalizes the features to mean=0 and std=1"""
@@ -454,7 +467,18 @@ class TitanicDataset(Dataset):
 
         dataset[4] = pd.to_numeric(dataset[4])  # Convert age to numeric
         dataset[8] = pd.to_numeric(dataset[8])  # Convert fare to numeric
-        return self._one_hot(dataset)
+        
+        dataset = self._one_hot(dataset)
+        # float64 -> float32
+        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
+            np.float64
+        ).astype(np.float32)
+        # int64 -> float32
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
+
+        return dataset
 
     def _one_hot(self, dataset):
         """Performs one-hot encoding on categorical columns"""
