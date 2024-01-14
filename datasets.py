@@ -7,7 +7,57 @@ from pandas.api.types import is_numeric_dtype, is_float_dtype
 import numpy as np
 
 
-class CaliforniaHousingDataset(Dataset):
+class BaseDataset(Dataset):
+    def __init__(self):
+        pass
+
+    def _dtypes_to_float32(self, dataset):
+        # float64 -> float32
+        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
+            np.float64
+        ).astype(np.float32)
+        # int64 -> float32
+        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
+            np.int64
+        ).astype(np.float32)
+        return dataset
+
+    def _one_hot(self, dataset):
+        """Performs one-hot encoding on categorical columns"""
+        dataset_one_hot = dataset.copy()
+        for key in dataset.keys():
+            if not is_numeric_dtype(dataset[key]) and not is_float_dtype(dataset[key]):
+                # Drop the column containing non numerical values and append ohe columns
+                dataset_one_hot = dataset_one_hot.drop(key, axis=1)
+                one_hot_from_column = pd.get_dummies(dataset[key], dtype=int)
+                dataset_one_hot = pd.concat(
+                    [dataset_one_hot, one_hot_from_column], axis=1
+                )
+        return dataset_one_hot
+
+    def _normalize_features(self):
+        """Normalizes the features to mean=0 and std=1"""
+        scaler = StandardScaler()
+        self.features = pd.DataFrame(scaler.fit_transform(self.features))
+
+    def _split_features_target(self, dataset):
+        """Splits the dataset into features and target"""
+        features = dataset.drop(self.target_col, axis=1)
+        target = dataset[self.target_col]
+        return features, target
+
+    def __len__(self):
+        """Returns the length of the dataset"""
+        return len(self.features)
+
+    def __getitem__(self, idx):
+        """Returns the features and target for a given index"""
+        features = self.features.iloc[idx].values
+        target = self.target.iloc[idx]
+        return features, target
+
+
+class CaliforniaHousingDataset(BaseDataset):
     """Loads and contains california housing dataset
 
     https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
@@ -46,9 +96,7 @@ class CaliforniaHousingDataset(Dataset):
             train_size: Fraction of the dataset devoted to the training set
         """
         dataset = pd.read_csv(dataset_path, header=None)
-        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
-            np.float64
-        ).astype(np.float32)
+        dataset = self._dtypes_to_float32(dataset)
 
         self.target_col = dataset.columns[-1]  # 8, Median house value
         self.features, self.target = self._split_features_target(dataset)
@@ -66,29 +114,8 @@ class CaliforniaHousingDataset(Dataset):
             self.features = features_test
             self.target = target_test
 
-    def _normalize_features(self):
-        """Normalizes the features to mean=0 and std=1"""
-        scaler = StandardScaler()
-        self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
-    def _split_features_target(self, dataset):
-        """Splits the dataset into features and target"""
-        features = dataset.drop(self.target_col, axis=1)
-        target = dataset[self.target_col]
-        return features, target
-
-    def __len__(self):
-        """Returns the length of the dataset"""
-        return len(self.features)
-
-    def __getitem__(self, idx):
-        """Returns the features and target for a given index"""
-        features = self.features.iloc[idx].values
-        target = self.target.iloc[idx]
-        return features, target
-
-
-class AdultDataset(Dataset):
+class AdultDataset(BaseDataset):
     """Loads and contains the adult dataset
 
     https://archive.ics.uci.edu/dataset/2/adult
@@ -118,8 +145,9 @@ class AdultDataset(Dataset):
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
         """
-        self.dataset = self._load_and_preprocess_data(dataset_path)
-        self.features, self.target = self._split_features_target()
+        dataset = self._load_and_preprocess_data(dataset_path)
+        self.target_col = dataset.columns[-1]
+        self.features, self.target = self._split_features_target(dataset)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -149,44 +177,11 @@ class AdultDataset(Dataset):
         # After ohe, one of the columns is redundant (" <=50K", ">50K")
         dataset = self._one_hot(dataset).drop(" <=50K", axis=1)
 
-        # int64 -> float32
-        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
-            np.int64
-        ).astype(np.float32)
-
+        dataset = self._dtypes_to_float32(dataset)
         return dataset
 
-    def _one_hot(self, dataset):
-        """Performs one-hot encoding on categorical columns"""
-        dataset_one_hot = dataset.copy()
-        for key in dataset.keys():
-            if not is_numeric_dtype(dataset[key]):
-                # Drop the column containing non numerical values and append ohe columns
-                dataset_one_hot = dataset_one_hot.drop(key, axis=1)
-                one_hot_from_column = pd.get_dummies(dataset[key], dtype=int)
-                dataset_one_hot = pd.concat(
-                    [dataset_one_hot, one_hot_from_column], axis=1
-                )
-        return dataset_one_hot
 
-    def _split_features_target(self):
-        """Splits the dataset into features and target"""
-        features = self.dataset.drop(self.dataset.columns[-1], axis=1)
-        target = self.dataset[self.dataset.columns[-1]]
-        return features, target
-
-    def __len__(self):
-        """Returns the length of the dataset"""
-        return len(self.dataset)
-
-    def __getitem__(self, idx):
-        """Returns the features and target for a given index"""
-        features = self.features.iloc[idx].values
-        target = self.target.iloc[idx]
-        return features, target
-
-
-class WineDataset(Dataset):
+class WineDataset(BaseDataset):
     """Loads and contains wine quality dataset
 
     https://archive.ics.uci.edu/dataset/186/wine+quality
@@ -243,40 +238,8 @@ class WineDataset(Dataset):
             self.features = features_test
             self.target = target_test
 
-    def _dtypes_to_float32(self, dataset):
-        # float64 -> float32
-        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
-            np.float64
-        ).astype(np.float32)
-        # int64 -> float32
-        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
-            np.int64
-        ).astype(np.float32)
-        return dataset
 
-    def _normalize_features(self):
-        """Normalizes the features to mean=0 and std=1"""
-        scaler = StandardScaler()
-        self.features = pd.DataFrame(scaler.fit_transform(self.features))
-
-    def _split_features_target(self, dataset):
-        """Splits the dataset into features and target"""
-        features = dataset.drop(self.target_col, axis=1)
-        target = dataset[self.target_col]
-        return features, target
-
-    def __len__(self):
-        """Returns the length of the dataset"""
-        return len(self.features)
-
-    def __getitem__(self, idx):
-        """Returns the features and target for a given index"""
-        features = self.features.iloc[idx].values
-        target = self.target.iloc[idx]
-        return features, target
-
-
-class AutoMpgDataset(Dataset):
+class AutoMpgDataset(BaseDataset):
     """Loads and contains auto mpg dataset
 
     http://archive.ics.uci.edu/dataset/9/auto+mpg
@@ -349,41 +312,12 @@ class AutoMpgDataset(Dataset):
         # we have to convert exclusively
         dataset[3] = dataset[3].astype(np.float32)
 
-        # int64 -> float32
-        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
-            np.int64
-        ).astype(np.float32)
-
-        # float64 -> float32
-        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
-            np.float64
-        ).astype(np.float32)
+        dataset = self._dtypes_to_float32(dataset)
 
         return dataset
 
-    def _normalize_features(self):
-        """Normalizes the features to mean=0 and std=1"""
-        scaler = StandardScaler()
-        self.features = pd.DataFrame(scaler.fit_transform(self.features))
 
-    def _split_features_target(self, dataset):
-        """Splits the dataset into features and target"""
-        features = dataset.drop(self.target_col, axis=1)
-        target = dataset[self.target_col]
-        return features, target
-
-    def __len__(self):
-        """Returns the length of the dataset"""
-        return len(self.features)
-
-    def __getitem__(self, idx):
-        """Returns the features and target for a given index"""
-        features = self.features.iloc[idx].values
-        target = self.target.iloc[idx]
-        return features, target
-
-
-class TitanicDataset(Dataset):
+class TitanicDataset(BaseDataset):
     """Loads and contains titanic dataset
 
     https://www.openml.org/search?type=data&sort=runs&id=40945&status=active
@@ -441,6 +375,7 @@ class TitanicDataset(Dataset):
 
         self.target_col = dataset.columns[1]  # survived {0, 1}
         self.features, self.target = self._split_features_target(dataset)
+        self.features = self.features.rename(str, axis="columns")
 
         if normalize:
             self._normalize_features()
@@ -467,50 +402,8 @@ class TitanicDataset(Dataset):
 
         dataset[4] = pd.to_numeric(dataset[4])  # Convert age to numeric
         dataset[8] = pd.to_numeric(dataset[8])  # Convert fare to numeric
-        
+
         dataset = self._one_hot(dataset)
-        # float64 -> float32
-        dataset[dataset.select_dtypes(np.float64).columns] = dataset.select_dtypes(
-            np.float64
-        ).astype(np.float32)
-        # int64 -> float32
-        dataset[dataset.select_dtypes(np.int64).columns] = dataset.select_dtypes(
-            np.int64
-        ).astype(np.float32)
+        dataset = self._dtypes_to_float32(dataset)
 
         return dataset
-
-    def _one_hot(self, dataset):
-        """Performs one-hot encoding on categorical columns"""
-        dataset_one_hot = dataset.copy()
-        for key in dataset.keys():
-            if not is_numeric_dtype(dataset[key]) and not is_float_dtype(dataset[key]):
-                # Drop the column containing non numerical values and append ohe columns
-                dataset_one_hot = dataset_one_hot.drop(key, axis=1)
-                one_hot_from_column = pd.get_dummies(dataset[key], dtype=int)
-                dataset_one_hot = pd.concat(
-                    [dataset_one_hot, one_hot_from_column], axis=1
-                )
-        return dataset_one_hot
-
-    def _normalize_features(self):
-        """Normalizes the features to mean=0 and std=1"""
-        self.features = self.features.rename(str, axis="columns")
-        scaler = StandardScaler()
-        self.features = pd.DataFrame(scaler.fit_transform(self.features))
-
-    def _split_features_target(self, dataset):
-        """Splits the dataset into features and target"""
-        features = dataset.drop(self.target_col, axis=1)
-        target = dataset[self.target_col]
-        return features, target
-
-    def __len__(self):
-        """Returns the length of the dataset"""
-        return len(self.features)
-
-    def __getitem__(self, idx):
-        """Returns the features and target for a given index"""
-        features = self.features.iloc[idx].values
-        target = self.target.iloc[idx]
-        return features, target
