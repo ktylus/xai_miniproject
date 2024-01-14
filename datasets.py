@@ -137,17 +137,27 @@ class AdultDataset(BaseDataset):
         target: pd.DataFrame. Data containing targets
     """
 
-    def __init__(self, dataset_path: str, train: bool = True, train_size: float = 0.8):
+    def __init__(
+            self,
+            dataset_path: str,
+            normalize: bool = False,
+            train: bool = True,
+            train_size: float = 0.8
+    ):
         """Initializes dataset
 
         Args:
             dataset_path (str): Path to adult.data file
+            normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
         """
         dataset = self._load_and_preprocess_data(dataset_path)
         self.target_col = dataset.columns[-1]
         self.features, self.target = self._split_features_target(dataset)
+
+        if normalize:
+            self._normalize_features()
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
