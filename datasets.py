@@ -180,6 +180,7 @@ class AdultDataset(BaseDataset):
         dataset = self._one_hot(dataset).drop(" <=50K", axis=1)
 
         dataset = self._dtypes_to_float32(dataset)
+        dataset.columns = dataset.columns.map(str)
         return dataset
 
 
