@@ -89,7 +89,6 @@ class CaliforniaHousingDataset(BaseDataset):
         """
         dataset = pd.read_csv(dataset_path, header=None)
         dataset = self._dtypes_to_float32(dataset)
-
         if normalize:
             dataset = self._normalize_dataset(dataset)
 
@@ -145,10 +144,10 @@ class AdultDataset(BaseDataset):
             train_size: Fraction of the dataset devoted to the training set
         """
         dataset = self._load_and_preprocess_data(dataset_path)
-        if normalize:
-            dataset = self._normalize_dataset(dataset)
         self.target_col = dataset.columns[-1]
         self.features, self.target = self._split_features_target(dataset)
+        if normalize:
+            self.features = self._normalize_dataset(self.features)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -374,11 +373,12 @@ class TitanicDataset(BaseDataset):
         """
         dataset = pd.read_csv(dataset_path, skiprows=17, header=None)
         dataset = self._preprocess_dataset(dataset)
-        if normalize:
-            dataset = self._normalize_dataset(dataset)
 
         self.target_col = dataset.columns[1]  # survived {0, 1}
         self.features, self.target = self._split_features_target(dataset)
+
+        if normalize:
+            dataset = self._normalize_dataset(dataset)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
