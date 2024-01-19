@@ -11,14 +11,16 @@ class EarlyStopping:
     def __init__(self, dir, dataset_name, patience=7, verbose=False, delta=0, trace_func=print):
         """
         Args:
+            dir (str): Directory for the checkpoint to be saved
+            dataset_name (str): Name of the dataset for the model
+                            Base and surrogate_model will be saved to 
+                            path = "dir/dataset_name/{base/surrogate}_model_checkpoint.pt"
             patience (int): How long to wait after last time validation loss improved.
                             Default: 7
             verbose (bool): If True, prints a message for each validation loss improvement. 
                             Default: False
             delta (float): Minimum change in the monitored quantity to qualify as an improvement.
                             Default: 0
-            path (str): Path for the checkpoint to be saved to.
-                            Default: 'checkpoint.pt'
             trace_func (function): trace print function.
                             Default: print            
         """
