@@ -27,10 +27,10 @@ class BaseDataset(Dataset):
                 )
         return dataset_one_hot
 
-    def _normalize_features(self):
+    def _normalize_dataset(self, dataset):
         """Normalizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
-        self.features = pd.DataFrame(scaler.fit_transform(self.features))
+        return pd.DataFrame(scaler.fit_transform(dataset))
 
     def _split_features_target(self, dataset):
         """Splits the dataset into features and target"""
@@ -89,12 +89,11 @@ class CaliforniaHousingDataset(BaseDataset):
         """
         dataset = pd.read_csv(dataset_path, header=None)
         dataset = self._dtypes_to_float32(dataset)
+        if normalize:
+            dataset = self._normalize_dataset(dataset)
 
         self.target_col = dataset.columns[-1]  # 8, Median house value
         self.features, self.target = self._split_features_target(dataset)
-
-        if normalize:
-            self._normalize_features()
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -130,11 +129,11 @@ class AdultDataset(BaseDataset):
     """
 
     def __init__(
-            self,
-            dataset_path: str,
-            normalize: bool = False,
-            train: bool = True,
-            train_size: float = 0.8
+        self,
+        dataset_path: str,
+        normalize: bool = False,
+        train: bool = True,
+        train_size: float = 0.8,
     ):
         """Initializes dataset
 
@@ -147,9 +146,8 @@ class AdultDataset(BaseDataset):
         dataset = self._load_and_preprocess_data(dataset_path)
         self.target_col = dataset.columns[-1]
         self.features, self.target = self._split_features_target(dataset)
-
         if normalize:
-            self._normalize_features()
+            self.features = self._normalize_dataset(self.features)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -225,12 +223,12 @@ class WineDataset(BaseDataset):
         """
         dataset = pd.read_csv(dataset_path, sep=";")
         dataset = self._dtypes_to_float32(dataset)
+        if normalize:
+            dataset = self._normalize_dataset(dataset)
 
         self.target_col = dataset.columns[-1]  # 12, wine quality
         self.features, self.target = self._split_features_target(dataset)
 
-        if normalize:
-            self._normalize_features()
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -282,11 +280,11 @@ class AutoMpgDataset(BaseDataset):
         """
         dataset = pd.read_csv(dataset_path, header=None, delim_whitespace=True)
         dataset = self._preprocess_dataset(dataset)
+        if normalize:
+            dataset = self._normalize_dataset(dataset)
         self.target_col = dataset.columns[0]  # 0, mpg - miles per galon
         self.features, self.target = self._split_features_target(dataset)
 
-        if normalize:
-            self._normalize_features()
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -378,10 +376,10 @@ class TitanicDataset(BaseDataset):
 
         self.target_col = dataset.columns[1]  # survived {0, 1}
         self.features, self.target = self._split_features_target(dataset)
-        self.features = self.features.rename(str, axis="columns")
 
         if normalize:
-            self._normalize_features()
+            dataset = self._normalize_dataset(dataset)
+
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
         )
@@ -408,5 +406,7 @@ class TitanicDataset(BaseDataset):
 
         dataset = self._one_hot(dataset)
         dataset = self._dtypes_to_float32(dataset)
+
+        dataset.columns = dataset.columns.map(str)
 
         return dataset
