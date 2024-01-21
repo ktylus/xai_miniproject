@@ -1,0 +1,15 @@
+adult:
+{'n_hidden_layers': 5, 'layer_size': 64, 'batch_size': 64}
+
+titanic:
+{'n_hidden_layers': 4, 'layer_size': 16, 'batch_size': 32}
+
+wine:
+{'n_hidden_layers': 3, 'layer_size': 128, 'batch_size': 32}
+
+housing:
+{'n_hidden_layers': 3, 'layer_size': 256, 'batch_size': 128}
+
+autompg:
+{'n_hidden_layers': 6, 'layer_size': 512, 'batch_size': 64}
+
