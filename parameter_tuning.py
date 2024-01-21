@@ -10,43 +10,10 @@ from ray.tune.schedulers import ASHAScheduler
 from log_cosh_loss import LogCoshLoss
 
 from datasets import CaliforniaHousingDataset, AdultDataset, TitanicDataset, AutoMpgDataset, WineDataset
+from train import load_wine_data, load_autompg_data, load_housing_data, load_titanic_data, load_adult_data
 from metrics import calculate_global_fidelity
 from models.base_model import BaseClassifier, BaseRegressor
 from models.surrogate_model import SurrogateClassifier, SurrogateRegressor
-
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-
-def load_housing_data():
-    housing_train = CaliforniaHousingDataset(
-        dataset_path="data/california_housing/cal_housing.data", normalize=True, train=True)
-    housing_test = CaliforniaHousingDataset(
-        dataset_path="data/california_housing/cal_housing.data", normalize=True, train=False)
-    return housing_train, housing_test
-
-
-def load_adult_data():
-    adult_train = AdultDataset(dataset_path="data/adult/adult.data", normalize=True, train=True)
-    adult_test = AdultDataset(dataset_path="data/adult/adult.data", normalize=True, train=False)
-    return adult_train, adult_test
-
-
-def load_wine_data():
-    wine_train = WineDataset(dataset_path="data/wines/winequality-red.csv", normalize=True, train=True)
-    wine_test = WineDataset(dataset_path="data/wines/winequality-red.csv", normalize=True, train=False)
-    return wine_train, wine_test
-
-
-def load_titanic_data():
-    titanic_train = TitanicDataset(dataset_path="data/titanic/titanic.arff", normalize=True, train=True)
-    titanic_test = TitanicDataset(dataset_path="data/titanic/titanic.arff", normalize=True, train=False)
-    return titanic_train, titanic_test
-
-
-def load_autompg_data():
-    autompg_train = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", normalize=True, train=True)
-    autompg_test = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", normalize=True, train=False)
-    return autompg_train, autompg_test
 
 
 def tuning_train(
@@ -111,6 +78,8 @@ def calculate_validation_mtl_loss(
         mtl_loss = alpha * loss + (1 - alpha) * point_fidelity
         return mtl_loss
 
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 adult_train, adult_test = load_adult_data()
 titanic_train, titanic_test = load_titanic_data()

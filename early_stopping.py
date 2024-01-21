@@ -50,7 +50,8 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, base_model, surrogate_model)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.verbose:
+                self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -62,8 +63,7 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).')
-
-        print("Saving models ...")
+            print("Saving models ...")
         torch.save(base_model.state_dict(), f"{self.dir}/{self.dataset_name}/base_model_checkpoint.pt")
         torch.save(surrogate_model.state_dict(), f"{self.dir}/{self.dataset_name}/surrogate_model_checkpoint.pt")
         self.val_loss_min = val_loss
