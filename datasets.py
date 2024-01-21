@@ -30,7 +30,10 @@ class BaseDataset(Dataset):
     def _normalize_dataset(self, dataset):
         """Normalizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
-        return pd.DataFrame(scaler.fit_transform(dataset))
+        normalized_data = scaler.fit_transform(dataset)
+        return pd.DataFrame(
+            normalized_data, columns=dataset.columns, index=dataset.index
+        )
 
     def _split_features_target(self, dataset):
         """Splits the dataset into features and target"""
@@ -86,13 +89,35 @@ class CaliforniaHousingDataset(BaseDataset):
             normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
+
+        Original dataset attributes:
+            longitude: continuous.
+            latitude: continuous.
+            housingMedianAge: continuous.
+            totalRooms: continuous.
+            totalBedrooms: continuous.
+            population: continuous.
+            households: continuous.
+            medianIncome: continuous.
+            medianHouseValue: continuous.
         """
         dataset = pd.read_csv(dataset_path, header=None)
+        dataset.columns = [
+            "longitude",
+            "latitude",
+            "housingMedianAge",
+            "totalRooms",
+            "totalBedrooms",
+            "population",
+            "households",
+            "medianIncome",
+            "medianHouseValue",
+        ]
         dataset = self._dtypes_to_float32(dataset)
         if normalize:
             dataset = self._normalize_dataset(dataset)
 
-        self.target_col = dataset.columns[-1]  # 8, Median house value
+        self.target_col = "medianHouseValue"  # 8, Median house value
         self.features, self.target = self._split_features_target(dataset)
 
         features_train, features_test, target_train, target_test = train_test_split(
@@ -142,9 +167,26 @@ class AdultDataset(BaseDataset):
             normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
+
+        Original dataset attributes:
+            1. age
+            2. workclass
+            3. fnlwgt
+            4. education
+            5. education-num
+            6. marital-status
+            7. occupation
+            8. relationship
+            9. race
+            10. sex
+            11. capital-gain
+            12. capital-loss
+            13. hours-per-week
+            14. native-country
+            15. income
         """
         dataset = self._load_and_preprocess_data(dataset_path)
-        self.target_col = dataset.columns[-1]
+        self.target_col = " >50K"
         self.features, self.target = self._split_features_target(dataset)
         if normalize:
             self.features = self._normalize_dataset(self.features)
@@ -162,8 +204,26 @@ class AdultDataset(BaseDataset):
     def _load_and_preprocess_data(self, dataset_path):
         """Loads and preprocesses the dataset"""
         dataset = pd.read_csv(dataset_path, header=None)
+        dataset.columns = [
+            "age",
+            "workclass",
+            "fnlwgt",
+            "education",
+            "education-num",
+            "marital-status",
+            "occupation",
+            "relationship",
+            "race",
+            "sex",
+            "capital-gain",
+            "capital-loss",
+            "hours-per-week",
+            "native-country",
+            "income",
+        ]
         # Drop the 3rd column "education" as it's redundant
-        dataset = dataset.drop(3, axis=1).dropna()
+        # dataset = dataset.drop("education", axis=1).dropna()
+        dataset = dataset.drop("education", axis=1).dropna()
 
         # Find columns that have " ?" as values
         columns_with_question_mark_as_values = [
@@ -174,11 +234,10 @@ class AdultDataset(BaseDataset):
         for column in columns_with_question_mark_as_values:
             dataset[column] = dataset[column].replace([" ?"], f"{column}_unknown")
 
-        # After ohe, one of the columns is redundant (" <=50K", ">50K")
+        # After ohe, one of the columns is redundant (" <=50K", " >50K")
         dataset = self._one_hot(dataset).drop(" <=50K", axis=1)
 
         dataset = self._dtypes_to_float32(dataset)
-        dataset.columns = dataset.columns.map(str)
         return dataset
 
 
@@ -220,13 +279,43 @@ class WineDataset(BaseDataset):
             normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
+
+        Original dataset attributes:
+            Input variables (based on physicochemical tests):
+            1 - fixed acidity
+            2 - volatile acidity
+            3 - citric acid
+            4 - residual sugar
+            5 - chlorides
+            6 - free sulfur dioxide
+            7 - total sulfur dioxide
+            8 - density
+            9 - pH
+            10 - sulphates
+            11 - alcohol
+            Output variable (based on sensory data):
+            12 - quality (score between 0 and 10)
         """
         dataset = pd.read_csv(dataset_path, sep=";")
+        dataset.columns = [
+            "fixed acidity",
+            "volatile acidity",
+            "citric acid",
+            "residual sugar",
+            "chlorides",
+            "free sulfur dioxide",
+            "total sulfur dioxide",
+            "density",
+            "pH",
+            "sulphates",
+            "alcohol",
+            "quality",
+        ]
         dataset = self._dtypes_to_float32(dataset)
         if normalize:
             dataset = self._normalize_dataset(dataset)
 
-        self.target_col = dataset.columns[-1]  # 12, wine quality
+        self.target_col = "quality"  # 12, wine quality
         self.features, self.target = self._split_features_target(dataset)
 
         features_train, features_test, target_train, target_test = train_test_split(
@@ -277,12 +366,34 @@ class AutoMpgDataset(BaseDataset):
             normalize: Boolean whether to normalize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
+
+        Original dataset attributes:
+            1. mpg:           continuous
+            2. cylinders:     multi-valued discrete
+            3. displacement:  continuous
+            4. horsepower:    continuous
+            5. weight:        continuous
+            6. acceleration:  continuous
+            7. model year:    multi-valued discrete
+            8. origin:        multi-valued discrete
+            9. car name:      string (unique for each instance)
         """
         dataset = pd.read_csv(dataset_path, header=None, delim_whitespace=True)
+        dataset.columns = [
+            "mpg",
+            "cylinders",
+            "displacement",
+            "horsepower",
+            "weight",
+            "acceleration",
+            "model year",
+            "origin",
+            "car name",
+        ]
         dataset = self._preprocess_dataset(dataset)
         if normalize:
             dataset = self._normalize_dataset(dataset)
-        self.target_col = dataset.columns[0]  # 0, mpg - miles per galon
+        self.target_col = "mpg"  # 0, mpg - miles per galon
         self.features, self.target = self._split_features_target(dataset)
 
         features_train, features_test, target_train, target_test = train_test_split(
@@ -298,7 +409,7 @@ class AutoMpgDataset(BaseDataset):
     def _preprocess_dataset(self, dataset):
         """Drops car model name column and deletes rows that contain '?' value"""
         dataset = dataset.drop(
-            dataset.columns[-1], axis=1
+            "car name", axis=1
         )  # Drop column with car model name (unique string)
 
         dataset.dropna()
@@ -308,10 +419,6 @@ class AutoMpgDataset(BaseDataset):
                 col_name = col
 
         dataset = dataset[dataset[col_name] != "?"]
-
-        # 3rd column has dtype object
-        # we have to convert exclusively
-        dataset[3] = dataset[3].astype(np.float32)
 
         dataset = self._dtypes_to_float32(dataset)
 
@@ -356,29 +463,46 @@ class TitanicDataset(BaseDataset):
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
-        0 @attribute 'pclass' numeric
-        1 @attribute 'survived' {0,1}
-        2 @attribute 'name' string
-        3 @attribute 'sex' {'female','male'}
-        4 @attribute 'age' numeric
-        5 @attribute 'sibsp' numeric
-        6 @attribute 'parch' numeric
-        7 @attribute 'ticket' string
-        8 @attribute 'fare' numeric
-        9 @attribute 'cabin' string
-        10 @attribute 'embarked' {'C','Q','S'}
-        11 @attribute 'boat' string
-        12 @attribute 'body' numeric
-        13 @attribute 'home.dest' string
+        Original dataset attributes:
+            0 @attribute 'pclass' numeric
+            1 @attribute 'survived' {0,1}
+            2 @attribute 'name' string
+            3 @attribute 'sex' {'female','male'}
+            4 @attribute 'age' numeric
+            5 @attribute 'sibsp' numeric
+            6 @attribute 'parch' numeric
+            7 @attribute 'ticket' string
+            8 @attribute 'fare' numeric
+            9 @attribute 'cabin' string
+            10 @attribute 'embarked' {'C','Q','S'}
+            11 @attribute 'boat' string
+            12 @attribute 'body' numeric
+            13 @attribute 'home.dest' string
         """
         dataset = pd.read_csv(dataset_path, skiprows=17, header=None)
+        dataset.columns = [
+            "pclass",
+            "survived",
+            "name",
+            "sex",
+            "age",
+            "sibsp",
+            "parch",
+            "ticket",
+            "fare",
+            "cabin",
+            "embarked",
+            "boat",
+            "body",
+            "home.dest",
+        ]
         dataset = self._preprocess_dataset(dataset)
 
-        self.target_col = dataset.columns[1]  # survived {0, 1}
+        self.target_col = "survived"  # survived {0, 1}
         self.features, self.target = self._split_features_target(dataset)
 
         if normalize:
-            dataset = self._normalize_dataset(dataset)
+            self.features = self._normalize_dataset(self.features)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -391,8 +515,7 @@ class TitanicDataset(BaseDataset):
             self.target = target_test
 
     def _preprocess_dataset(self, dataset):
-        # Drop 2 name, 7 ticket, 9 cabin, 11 boat, 12 body, 13 home dest column
-        to_drop = dataset.columns[[2, 7, 9, 11, 12, 13]]
+        to_drop = ["name", "ticket", "cabin", "boat", "body", "home.dest"]
         dataset = dataset.drop(to_drop, axis=1)
         dataset.dropna()
 
@@ -401,12 +524,12 @@ class TitanicDataset(BaseDataset):
         for col in col_names:
             dataset = dataset[dataset[col] != "?"]
 
-        dataset[4] = pd.to_numeric(dataset[4])  # Convert age to numeric
-        dataset[8] = pd.to_numeric(dataset[8])  # Convert fare to numeric
+        dataset["age"] = pd.to_numeric(dataset["age"])  # Convert age to numeric
+        dataset["fare"] = pd.to_numeric(dataset["fare"])  # Convert fare to numeric
 
         dataset = self._one_hot(dataset)
         dataset = self._dtypes_to_float32(dataset)
 
-        dataset.columns = dataset.columns.map(str)
+        # dataset.columns = dataset.columns.map(str)
 
         return dataset
