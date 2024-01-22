@@ -14,33 +14,33 @@ from models.surrogate_model import SurrogateClassifier, SurrogateRegressor
 
 def load_housing_data():
     housing_train = CaliforniaHousingDataset(
-        dataset_path="data/california_housing/cal_housing.data", normalize=True, train=True)
+        dataset_path="data/california_housing/cal_housing.data", standardize=True, train=True)
     housing_test = CaliforniaHousingDataset(
-        dataset_path="data/california_housing/cal_housing.data", normalize=True, train=False)
+        dataset_path="data/california_housing/cal_housing.data", standardize=True, train=False)
     return housing_train, housing_test
 
 
 def load_adult_data():
-    adult_train = AdultDataset(dataset_path="data/adult/adult.data", normalize=True, train=True)
-    adult_test = AdultDataset(dataset_path="data/adult/adult.data", normalize=True, train=False)
+    adult_train = AdultDataset(dataset_path="data/adult/adult.data", standardize=True, train=True)
+    adult_test = AdultDataset(dataset_path="data/adult/adult.data", standardize=True, train=False)
     return adult_train, adult_test
 
 
 def load_wine_data():
-    wine_train = WineDataset(dataset_path="data/wines/winequality-red.csv", normalize=True, train=True)
-    wine_test = WineDataset(dataset_path="data/wines/winequality-red.csv", normalize=True, train=False)
+    wine_train = WineDataset(dataset_path="data/wines/winequality-red.csv", standardize=True, train=True)
+    wine_test = WineDataset(dataset_path="data/wines/winequality-red.csv", standardize=True, train=False)
     return wine_train, wine_test
 
 
 def load_titanic_data():
-    titanic_train = TitanicDataset(dataset_path="data/titanic/titanic.arff", normalize=True, train=True)
-    titanic_test = TitanicDataset(dataset_path="data/titanic/titanic.arff", normalize=True, train=False)
+    titanic_train = TitanicDataset(dataset_path="data/titanic/titanic.arff", standardize=True, train=True)
+    titanic_test = TitanicDataset(dataset_path="data/titanic/titanic.arff", standardize=True, train=False)
     return titanic_train, titanic_test
 
 
 def load_autompg_data():
-    autompg_train = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", normalize=True, train=True)
-    autompg_test = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", normalize=True, train=False)
+    autompg_train = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", standardize=True, train=True)
+    autompg_test = AutoMpgDataset(dataset_path="data/autompg/auto-mpg.data", standardize=True, train=False)
     return autompg_train, autompg_test
 
 
