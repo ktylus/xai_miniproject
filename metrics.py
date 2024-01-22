@@ -34,7 +34,6 @@ def calculate_neighborhood_fidelity(
     surrogate_model_preds = surrogate_model(nearby_points).squeeze()
     return (1 / n_points) * torch.sum(torch.pow(surrogate_model_preds - base_model_preds, 2), dim=-1)
 
-
 def calculate_global_neighborhood_fidelity(
         base_model,
         surrogate_model,
@@ -45,3 +44,19 @@ def calculate_global_neighborhood_fidelity(
     batch_size = x.shape[0]
     return (1 / batch_size) * torch.sum(calculate_neighborhood_fidelity(base_model, surrogate_model, x,
                                                      perturbation_variance, n_points))
+
+def calculate_neighborhood_fidelity_lime(base_model, surrogate_model, x, perturbation_variance=0.1, n_points=50):
+    device = x.device  # Get the device from the input tensor
+    x_expanded = x.unsqueeze(-1).expand(*x.shape, n_points).to(device)
+    nearby_points = torch.normal(x_expanded, perturbation_variance).to(device)
+    nearby_points = torch.swapaxes(nearby_points, 1, 2)
+
+    base_model_preds = base_model(nearby_points).squeeze()
+    surrogate_model_preds = torch.Tensor(surrogate_model.predict(nearby_points.cpu().numpy().squeeze())).to(device)
+
+    return (1 / n_points) * torch.sum(torch.pow(surrogate_model_preds - base_model_preds, 2), dim=-1)
+
+def calculate_global_neighborhood_fidelity_lime(base_model, surrogate_model, x, perturbation_variance=0.1, n_points=50):
+    batch_size = x.shape[0]
+    device = x.device  # Get the device from the input tensor
+    return (1 / batch_size) * torch.sum(calculate_neighborhood_fidelity_lime(base_model, surrogate_model, x.to(device), perturbation_variance, n_points))
