@@ -12,7 +12,7 @@ Results can be found in tuning_results.txt.
 ### Global Explainability evaluation
 We trained the models as described in the paper and used our implementation of the described metrics.\
 The general tendency is that our results for the base model are better, but the results for the surrogate model (explainability metrics) are worse.\
-The results can be seen here: [image]
+The results can be seen here: ![results](https://github.com/ktylus/xai_miniproject/assets/30349386/9c30f0e8-c822-4a07-81f7-a0130ea235cb)
 
 ### Local Explainability evaluation
 
