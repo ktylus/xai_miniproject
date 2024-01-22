@@ -27,12 +27,12 @@ class BaseDataset(Dataset):
                 )
         return dataset_one_hot
 
-    def _normalize_dataset(self, dataset):
-        """Normalizes the features to mean=0 and std=1"""
+    def _standardize(self, dataset):
+        """Standardizes the features to mean=0 and std=1"""
         scaler = StandardScaler()
-        normalized_data = scaler.fit_transform(dataset)
+        standardized_data = scaler.fit_transform(dataset)
         return pd.DataFrame(
-            normalized_data, columns=dataset.columns, index=dataset.index
+           standardized_data, columns=dataset.columns, index=dataset.index
         )
 
     def _split_features_target(self, dataset):
@@ -62,8 +62,8 @@ class CaliforniaHousingDataset(BaseDataset):
 
         california_housing_path = "path/to/cal_housing.data"
 
-        test_dataset = CaliforniaHousingDataset(california_housing_path, normalize=True, train=False)
-        train_dataset = CaliforniaHousingDataset(california_housing_path, normalize=True, train=True)
+        test_dataset = CaliforniaHousingDataset(california_housing_path, standardize=True, train=False)
+        train_dataset = CaliforniaHousingDataset(california_housing_path, standardize=True, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -78,7 +78,7 @@ class CaliforniaHousingDataset(BaseDataset):
     def __init__(
         self,
         dataset_path: str,
-        normalize: bool = False,
+        standardize: bool = False,
         train: bool = True,
         train_size: float = 0.8,
     ):
@@ -86,7 +86,7 @@ class CaliforniaHousingDataset(BaseDataset):
 
         Args:
             dataset_path: Path to cal_housing.data file
-            normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            standardize: Boolean whether to standardize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
@@ -114,8 +114,8 @@ class CaliforniaHousingDataset(BaseDataset):
             "medianHouseValue",
         ]
         dataset = self._dtypes_to_float32(dataset)
-        if normalize:
-            dataset = self._normalize_dataset(dataset)
+        if standardize:
+            dataset = self._standardize(dataset)
 
         self.target_col = "medianHouseValue"  # 8, Median house value
         self.features, self.target = self._split_features_target(dataset)
@@ -156,7 +156,7 @@ class AdultDataset(BaseDataset):
     def __init__(
         self,
         dataset_path: str,
-        normalize: bool = False,
+        standardize: bool = False,
         train: bool = True,
         train_size: float = 0.8,
     ):
@@ -164,7 +164,7 @@ class AdultDataset(BaseDataset):
 
         Args:
             dataset_path (str): Path to adult.data file
-            normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            standardize: Boolean whether to standardize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
@@ -188,8 +188,8 @@ class AdultDataset(BaseDataset):
         dataset = self._load_and_preprocess_data(dataset_path)
         self.target_col = " >50K"
         self.features, self.target = self._split_features_target(dataset)
-        if normalize:
-            self.features = self._normalize_dataset(self.features)
+        if standardize:
+            self.features = self._standardize(self.features)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
@@ -252,8 +252,8 @@ class WineDataset(BaseDataset):
         wine_path = "path/to/winequality-red.csv"
         # wine_path = "path/to/winequality-white.csv"
 
-        test_dataset = WineDataset(wine_path, normalize=True, train=False)
-        train_dataset = WineDataset(wine_path, normalize=True, train=True)
+        test_dataset = WineDataset(wine_path, standardize=True, train=False)
+        train_dataset = WineDataset(wine_path, standardize=True, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -268,7 +268,7 @@ class WineDataset(BaseDataset):
     def __init__(
         self,
         dataset_path: str,
-        normalize: bool = False,
+        standardize: bool = False,
         train: bool = True,
         train_size: float = 0.8,
     ):
@@ -276,7 +276,7 @@ class WineDataset(BaseDataset):
 
         Args:
             dataset_path: Path to winequality-red.csv or winequality-white.csv file
-            normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            standardize: Boolean whether to standardize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
@@ -312,8 +312,8 @@ class WineDataset(BaseDataset):
             "quality",
         ]
         dataset = self._dtypes_to_float32(dataset)
-        if normalize:
-            dataset = self._normalize_dataset(dataset)
+        if standardize:
+            dataset = self._standardize(dataset)
 
         self.target_col = "quality"  # 12, wine quality
         self.features, self.target = self._split_features_target(dataset)
@@ -339,8 +339,8 @@ class AutoMpgDataset(BaseDataset):
 
         auto_path = "path/to/auto-mpg.data"
 
-        test_dataset =  AutoMpgDataset(auto_path, normalize=True, train=False)
-        train_dataset = AutoMpgDataset(auto_path, normalize=True, train=True)
+        test_dataset =  AutoMpgDataset(auto_path, standardize=True, train=False)
+        train_dataset = AutoMpgDataset(auto_path, standardize=True, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -355,7 +355,7 @@ class AutoMpgDataset(BaseDataset):
     def __init__(
         self,
         dataset_path: str,
-        normalize: bool = False,
+        standardize: bool = False,
         train: bool = True,
         train_size: float = 0.8,
     ):
@@ -363,7 +363,7 @@ class AutoMpgDataset(BaseDataset):
 
         Args:
             dataset_path: Path to auto-mpg.data
-            normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            standardize: Boolean whether to standardize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
@@ -391,8 +391,8 @@ class AutoMpgDataset(BaseDataset):
             "car name",
         ]
         dataset = self._preprocess_dataset(dataset)
-        if normalize:
-            dataset = self._normalize_dataset(dataset)
+        if standardize:
+            dataset = self._standardize(dataset)
         self.target_col = "mpg"  # 0, mpg - miles per galon
         self.features, self.target = self._split_features_target(dataset)
 
@@ -435,8 +435,8 @@ class TitanicDataset(BaseDataset):
 
         titanic_path = "path/to/titanic.arff"
 
-        test_dataset = TitanicDataset(titanic_path, normalize=True, train=False)
-        train_dataset =  TitanicDataset(titanic_path, normalize=True, train=True)
+        test_dataset = TitanicDataset(titanic_path, standardize=True, train=False)
+        train_dataset =  TitanicDataset(titanic_path, standardize=True, train=True)
 
         test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -451,7 +451,7 @@ class TitanicDataset(BaseDataset):
     def __init__(
         self,
         dataset_path: str,
-        normalize: bool = False,
+        standardize: bool = False,
         train: bool = True,
         train_size: float = 0.8,
     ):
@@ -459,7 +459,7 @@ class TitanicDataset(BaseDataset):
 
         Args:
             dataset_path: Path to titanic.arff
-            normalize: Boolean whether to normalize dataset to mean=0 and std=1
+            standardize: Boolean whether to standardize dataset to mean=0 and std=1
             train: Boolean whether to extract training set
             train_size: Fraction of the dataset devoted to the training set
 
@@ -501,8 +501,8 @@ class TitanicDataset(BaseDataset):
         self.target_col = "survived"  # survived {0, 1}
         self.features, self.target = self._split_features_target(dataset)
 
-        if normalize:
-            self.features = self._normalize_dataset(self.features)
+        if standardize:
+            self.features = self._standardize(self.features)
 
         features_train, features_test, target_train, target_test = train_test_split(
             self.features, self.target, train_size=train_size
